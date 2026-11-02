@@ -14,5 +14,5 @@ repositories {
 
 dependencies {
     api project(':halcyon-core')
-    implementation group: 'com.palantir.javapoet', name: 'javapoet', version: '0.22.0'
+    api group: 'com.palantir.javapoet', name: 'javapoet', version: '0.22.0'
 }

@@ -19,5 +19,4 @@ repositories {
 
 dependencies {
     implementation project(':halcyon-processor-api')
-    implementation group: 'com.palantir.javapoet', name: 'javapoet', version: '0.22.0'
 }
