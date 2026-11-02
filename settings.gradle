@@ -1,0 +1,4 @@
+rootProject.name = 'halcyon'
+include('halcyon-core')
+include('halcyon-processor')
+include('halcyon-processor-api')

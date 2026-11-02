@@ -1,0 +1,12 @@
+# Gradle
+.gradle
+build
+
+# Eclipse
+.classpath
+.project
+.settings
+.factorypath
+.apt_generated
+.apt_generated_tests
+bin
