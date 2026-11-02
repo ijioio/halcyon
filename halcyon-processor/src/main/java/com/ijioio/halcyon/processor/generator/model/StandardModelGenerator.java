@@ -1,20 +1,22 @@
-package com.rondhuit.platform.processor.generator.model.index;
+package com.ijioio.halcyon.processor.generator.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.lang.model.element.Modifier;
 
-import com.ijioio.halcyon.core.ModelIndex;
+import com.ijioio.halcyon.core.Model;
+import com.ijioio.halcyon.core.RootModel;
 import com.ijioio.halcyon.core.TypeReference;
 import com.ijioio.halcyon.core.exception.IntrospectionException;
 import com.ijioio.halcyon.core.property.Property;
 import com.ijioio.halcyon.processor.api.Logger;
 import com.ijioio.halcyon.processor.api.ProcessingRuntime;
-import com.ijioio.halcyon.processor.api.generator.ModelIndexGenerator;
-import com.ijioio.halcyon.processor.api.meta.ModelIndexMeta;
-import com.ijioio.halcyon.processor.api.meta.ModelIndexPropertyMeta;
+import com.ijioio.halcyon.processor.api.generator.ModelGenerator;
+import com.ijioio.halcyon.processor.api.meta.ModelMeta;
+import com.ijioio.halcyon.processor.api.meta.ModelPropertyMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
 import com.palantir.javapoet.AnnotationSpec;
 import com.palantir.javapoet.ClassName;
@@ -30,12 +32,12 @@ import com.palantir.javapoet.TypeSpec.Builder;
 import com.palantir.javapoet.TypeVariableName;
 import com.palantir.javapoet.WildcardTypeName;
 
-public class StandardModelIndexGenerator implements ModelIndexGenerator {
+public class StandardModelGenerator implements ModelGenerator {
 
 	private final PropertiesGenerator propertiesGenerator = new PropertiesGenerator();
 
 	@Override
-	public JavaFile generate(ModelIndexMeta modelMeta, ProcessingRuntime runtime, Logger log) {
+	public JavaFile generate(ModelMeta modelMeta, ProcessingRuntime runtime, Logger log) {
 
 		log.debug("generate -> " + getClass().getName());
 
@@ -43,12 +45,23 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 		Builder builder = TypeSpec.classBuilder(typeName);
 
-		builder.addModifiers(Modifier.PUBLIC);
-		builder.addSuperinterface(
-				ParameterizedTypeName.get(ClassName.get(ModelIndex.class), modelMeta.getModel().getType()));
+		builder.addModifiers(Stream.of(Modifier.PUBLIC).toArray(size -> new Modifier[size]));
+
+		if (modelMeta.getParent() != null) {
+
+			builder.superclass(ClassName.get(modelMeta.getParent().getPackageName(), modelMeta.getParent().getName()));
+
+			if (modelMeta.isRoot() && !modelMeta.isInheritedRoot()) {
+				builder.addSuperinterface(RootModel.class);
+			}
+
+		} else {
+			builder.addSuperinterface(modelMeta.isRoot() ? RootModel.class : Model.class);
+		}
+
 		builder.addType(propertiesGenerator.generate(modelMeta, runtime, log));
 
-		for (ModelIndexPropertyMeta propertyMeta : modelMeta.getProperties()) {
+		for (ModelPropertyMeta propertyMeta : modelMeta.getProperties()) {
 
 			String propertyName = propertyMeta.getName();
 			TypeName propertyType = propertyMeta.getType().getType();
@@ -57,6 +70,10 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 			fieldBuilder.addModifiers(Modifier.PRIVATE);
 
+			if (propertyMeta.isFinal()) {
+				fieldBuilder.addModifiers(Modifier.FINAL);
+			}
+
 			if (propertyMeta.getInitializer() != null) {
 				fieldBuilder.initializer(propertyMeta.getInitializer());
 			}
@@ -64,6 +81,7 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 			builder.addField(fieldBuilder.build());
 		}
 
+		generateToCaptionMethod(modelMeta, builder, runtime, log);
 		generateGetValueMethod(modelMeta, builder, runtime, log);
 		generateSetValueMethod(modelMeta, builder, runtime, log);
 		generateGetPropertiesMethod(modelMeta, builder, runtime, log);
@@ -71,8 +89,33 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 		return JavaFile.builder(modelMeta.getPackageName(), builder.build()).build();
 	}
 
-	private void generateGetValueMethod(ModelIndexMeta modelMeta, Builder builder, ProcessingRuntime runtime,
-			Logger log) {
+	private void generateToCaptionMethod(ModelMeta modelMeta, Builder builder, ProcessingRuntime runtime, Logger log) {
+
+		if (modelMeta.isEffectivelyRoot()) {
+
+			ModelPropertyMeta captionProperty = modelMeta.getProperties().stream().filter(item -> item.isCaption())
+					.findFirst().orElse(null);
+
+			if (captionProperty != null || !modelMeta.isInheritedRoot()) {
+
+				MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("toCaption");
+
+				methodBuilder.addModifiers(Modifier.PUBLIC);
+				methodBuilder.returns(String.class);
+
+				if (captionProperty != null) {
+					methodBuilder.addStatement("return $1L != null ? $2T.valueOf($1L) : null",
+							captionProperty.getName(), String.class);
+				} else {
+					methodBuilder.addStatement("return null");
+				}
+
+				builder.addMethod(methodBuilder.build());
+			}
+		}
+	}
+
+	private void generateGetValueMethod(ModelMeta modelMeta, Builder builder, ProcessingRuntime runtime, Logger log) {
 
 		ClassName propertiesType = ClassName.get(modelMeta.getPackageName(), modelMeta.getName(),
 				PropertiesGenerator.typeName);
@@ -83,7 +126,7 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 			int count = 0;
 
-			for (ModelIndexPropertyMeta propertyMeta : modelMeta.getProperties()) {
+			for (ModelPropertyMeta propertyMeta : modelMeta.getProperties()) {
 
 				String propertyName = propertyMeta.getName();
 				TypeName propertyType = propertyMeta.getType().getType();
@@ -105,8 +148,12 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 					codeBlockBuilder.nextControlFlow("else");
 
-					codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
-							String.class, "property %s is not supported");
+					if (modelMeta.getParent() != null) {
+						codeBlockBuilder.addStatement("return super.getValue(property)");
+					} else {
+						codeBlockBuilder.addStatement("throw new $T($T.format($S, property))",
+								IntrospectionException.class, String.class, "property %s is not supported");
+					}
 
 					codeBlockBuilder.endControlFlow();
 				}
@@ -116,8 +163,12 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 		} else {
 
-			codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
-					String.class, "property %s is not supported");
+			if (modelMeta.getParent() != null) {
+				codeBlockBuilder.addStatement("return super.getValue(property)");
+			} else {
+				codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
+						String.class, "property %s is not supported");
+			}
 		}
 
 		MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("getValue");
@@ -141,8 +192,7 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 		builder.addMethod(methodBuilder.build());
 	}
 
-	private void generateSetValueMethod(ModelIndexMeta modelMeta, Builder builder, ProcessingRuntime runtime,
-			Logger log) {
+	private void generateSetValueMethod(ModelMeta modelMeta, Builder builder, ProcessingRuntime runtime, Logger log) {
 
 		ClassName propertiesType = ClassName.get(modelMeta.getPackageName(), modelMeta.getName(),
 				PropertiesGenerator.typeName);
@@ -153,7 +203,7 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 			int count = 0;
 
-			for (ModelIndexPropertyMeta propertyMeta : modelMeta.getProperties()) {
+			for (ModelPropertyMeta propertyMeta : modelMeta.getProperties()) {
 
 				String propertyName = propertyMeta.getName();
 				TypeName propertyType = propertyMeta.getType().getType();
@@ -164,14 +214,22 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 					codeBlockBuilder.nextControlFlow("else if ($T.$L.equals(property))", propertiesType, propertyName);
 				}
 
-				codeBlockBuilder.addStatement("$L = ($T) value", propertyName, propertyType.box());
+				if (propertyMeta.getMerger() != null) {
+					codeBlockBuilder.add(propertyMeta.getMerger());
+				} else {
+					codeBlockBuilder.addStatement("$L = ($T) value", propertyName, propertyType.box());
+				}
 
 				if (count == modelMeta.getProperties().size() - 1) {
 
 					codeBlockBuilder.nextControlFlow("else");
 
-					codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
-							String.class, "property %s is not supported");
+					if (modelMeta.getParent() != null) {
+						codeBlockBuilder.addStatement("super.setValue(property, value)");
+					} else {
+						codeBlockBuilder.addStatement("throw new $T($T.format($S, property))",
+								IntrospectionException.class, String.class, "property %s is not supported");
+					}
 
 					codeBlockBuilder.endControlFlow();
 				}
@@ -181,8 +239,12 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 		} else {
 
-			codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
-					String.class, "property %s is not supported");
+			if (modelMeta.getParent() != null) {
+				codeBlockBuilder.addStatement("super.setValue(property, value)");
+			} else {
+				codeBlockBuilder.addStatement("throw new $T($T.format($S, property))", IntrospectionException.class,
+						String.class, "property %s is not supported");
+			}
 		}
 
 		MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("setValue");
@@ -206,7 +268,7 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 		builder.addMethod(methodBuilder.build());
 	}
 
-	private void generateGetPropertiesMethod(ModelIndexMeta modelMeta, Builder builder, ProcessingRuntime runtime,
+	private void generateGetPropertiesMethod(ModelMeta modelMeta, Builder builder, ProcessingRuntime runtime,
 			Logger log) {
 
 		ClassName propertiesType = ClassName.get(modelMeta.getPackageName(), modelMeta.getName(),
@@ -227,13 +289,18 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 
 		private static final String typeName = "Properties";
 
-		private TypeSpec generate(ModelIndexMeta modelMeta, ProcessingRuntime runtime, Logger log) {
+		private TypeSpec generate(ModelMeta modelMeta, ProcessingRuntime runtime, Logger log) {
 
 			TypeSpec.Builder builder = TypeSpec.classBuilder(PropertiesGenerator.typeName);
 
 			builder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
 
-			for (ModelIndexPropertyMeta propertyMeta : modelMeta.getProperties()) {
+			if (modelMeta.getParent() != null) {
+				builder.superclass(ClassName.get(modelMeta.getParent().getPackageName(),
+						modelMeta.getParent().getName(), PropertiesGenerator.typeName));
+			}
+
+			for (ModelPropertyMeta propertyMeta : modelMeta.getProperties()) {
 
 				String propertyName = propertyMeta.getName();
 				TypeName propertyType = propertyMeta.getType().getType();
@@ -252,14 +319,20 @@ public class StandardModelIndexGenerator implements ModelIndexGenerator {
 					ParameterizedTypeName.get(ClassName.get(Property.class), WildcardTypeName.subtypeOf(Object.class))),
 					"values");
 
-			fieldBuilder.addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+			fieldBuilder.addModifiers(Modifier.PROTECTED, Modifier.STATIC, Modifier.FINAL);
 			fieldBuilder.initializer("new $T<>()", ArrayList.class);
 
 			builder.addField(fieldBuilder.build());
 
 			CodeBlock.Builder codeBlockBuilder = CodeBlock.builder();
 
-			for (ModelIndexPropertyMeta propertyMeta : modelMeta.getProperties()) {
+			if (modelMeta.getParent() != null) {
+				codeBlockBuilder.addStatement("values.addAll($T.values)",
+						ClassName.get(modelMeta.getParent().getPackageName(), modelMeta.getParent().getName(),
+								PropertiesGenerator.typeName));
+			}
+
+			for (ModelPropertyMeta propertyMeta : modelMeta.getProperties()) {
 				codeBlockBuilder.addStatement("values.add($L)", propertyMeta.getName());
 			}
 
