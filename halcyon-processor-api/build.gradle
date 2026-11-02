@@ -1,0 +1,18 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(':halcyon-core')
+    implementation group: 'com.palantir.javapoet', name: 'javapoet', version: '0.22.0'
+}
