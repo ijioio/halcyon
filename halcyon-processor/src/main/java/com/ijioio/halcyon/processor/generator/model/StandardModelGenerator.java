@@ -12,13 +12,13 @@ import com.ijioio.halcyon.core.RootModel;
 import com.ijioio.halcyon.core.TypeReference;
 import com.ijioio.halcyon.core.exception.IntrospectionException;
 import com.ijioio.halcyon.core.property.Property;
+import com.ijioio.halcyon.core.util.TextUtil;
 import com.ijioio.halcyon.processor.api.Logger;
 import com.ijioio.halcyon.processor.api.ProcessingRuntime;
 import com.ijioio.halcyon.processor.api.generator.ModelGenerator;
 import com.ijioio.halcyon.processor.api.meta.ModelMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelPropertyMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
-import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.AnnotationSpec;
 import com.palantir.javapoet.ClassName;
 import com.palantir.javapoet.CodeBlock;
@@ -89,11 +89,11 @@ public class StandardModelGenerator implements ModelGenerator {
 			getMethodBuilder.addStatement("return $L", propertyName);
 
 			builder.addMethod(getMethodBuilder.build());
-			
-			if(!propertyMeta.isFinal()) {
-				
-				MethodSpec.Builder setMethodBuilder = MethodSpec.methodBuilder(String.format("set%s",
-						TextUtil.capitalize(propertyName)));
+
+			if (!propertyMeta.isFinal()) {
+
+				MethodSpec.Builder setMethodBuilder = MethodSpec
+						.methodBuilder(String.format("set%s", TextUtil.capitalize(propertyName)));
 
 				setMethodBuilder.addModifiers(Modifier.PUBLIC);
 				setMethodBuilder.addParameter(propertyType, propertyName);

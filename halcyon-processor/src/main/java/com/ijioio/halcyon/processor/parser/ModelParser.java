@@ -13,6 +13,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import com.ijioio.halcyon.core.annotation.ModelSpec;
+import com.ijioio.halcyon.core.util.TextUtil;
 import com.ijioio.halcyon.processor.api.Logger;
 import com.ijioio.halcyon.processor.api.Logger.MessageContext;
 import com.ijioio.halcyon.processor.api.ParseContext;
@@ -22,7 +23,6 @@ import com.ijioio.halcyon.processor.api.meta.ModelMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelPropertyMeta;
 import com.ijioio.halcyon.processor.api.meta.TypeMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
-import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.CodeBlock;
 import com.palantir.javapoet.TypeName;
 

@@ -12,6 +12,7 @@ import javax.lang.model.element.TypeElement;
 
 import com.ijioio.halcyon.core.Reference;
 import com.ijioio.halcyon.core.annotation.ModelIndexSpec;
+import com.ijioio.halcyon.core.util.TextUtil;
 import com.ijioio.halcyon.processor.api.Logger;
 import com.ijioio.halcyon.processor.api.ParseContext;
 import com.ijioio.halcyon.processor.api.ProcessingRuntime;
@@ -19,7 +20,6 @@ import com.ijioio.halcyon.processor.api.meta.ModelIndexMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelIndexPropertyMeta;
 import com.ijioio.halcyon.processor.api.meta.TypeMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
-import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.ClassName;
 import com.palantir.javapoet.CodeBlock;
 import com.palantir.javapoet.ParameterizedTypeName;
