@@ -13,7 +13,7 @@ public @interface ModelIndexSpec {
 
 	String name();
 
-	String packageName();
+	String packageName() default "";
 
 	public Class<? extends RootModel> model();
 }

@@ -169,4 +169,8 @@ public class ProcessorUtil {
 				.filter(mirror -> runtime.getTypes().isSameType(mirror.getAnnotationType(), typeMirror)).findFirst()
 				.orElse(null);
 	}
+
+	public static String getPackageName(Element element, ProcessingRuntime runtime) {
+		return runtime.getElements().getPackageOf(element).getQualifiedName().toString();
+	}
 }

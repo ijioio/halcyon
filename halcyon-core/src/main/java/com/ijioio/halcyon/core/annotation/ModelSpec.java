@@ -11,7 +11,7 @@ public @interface ModelSpec {
 
 	String name();
 
-	String packageName();
+	String packageName() default "";
 
 	boolean root() default false;
 }

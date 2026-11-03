@@ -21,6 +21,8 @@ import com.ijioio.halcyon.processor.api.exception.ParseException;
 import com.ijioio.halcyon.processor.api.meta.ModelMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelPropertyMeta;
 import com.ijioio.halcyon.processor.api.meta.TypeMeta;
+import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
+import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.CodeBlock;
 import com.palantir.javapoet.TypeName;
 
@@ -32,7 +34,8 @@ public class ModelParser {
 		ModelSpec model = type.getAnnotation(ModelSpec.class);
 
 		String name = model.name();
-		String packageName = model.packageName();
+		String packageName = !TextUtil.isBlank(model.packageName()) ? model.packageName()
+				: ProcessorUtil.getPackageName(type, runtime);
 		boolean root = model.root();
 
 		ModelMeta parent = null;

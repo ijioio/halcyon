@@ -19,6 +19,7 @@ import com.ijioio.halcyon.processor.api.meta.ModelIndexMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelIndexPropertyMeta;
 import com.ijioio.halcyon.processor.api.meta.TypeMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
+import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.ClassName;
 import com.palantir.javapoet.CodeBlock;
 import com.palantir.javapoet.ParameterizedTypeName;
@@ -32,7 +33,8 @@ public class ModelIndexParser {
 		ModelIndexSpec indexModel = type.getAnnotation(ModelIndexSpec.class);
 
 		String name = indexModel.name();
-		String packageName = indexModel.packageName();
+		String packageName = !TextUtil.isBlank(indexModel.packageName()) ? indexModel.packageName()
+				: ProcessorUtil.getPackageName(type, runtime);
 		TypeMeta model = TypeParser.parse(ProcessorUtil.toType(() -> indexModel.model(), runtime), runtime, context,
 				log);
 
