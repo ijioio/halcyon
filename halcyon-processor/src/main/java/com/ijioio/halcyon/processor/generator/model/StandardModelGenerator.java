@@ -18,6 +18,7 @@ import com.ijioio.halcyon.processor.api.generator.ModelGenerator;
 import com.ijioio.halcyon.processor.api.meta.ModelMeta;
 import com.ijioio.halcyon.processor.api.meta.ModelPropertyMeta;
 import com.ijioio.halcyon.processor.api.util.ProcessorUtil;
+import com.ijioio.halcyon.processor.api.util.TextUtil;
 import com.palantir.javapoet.AnnotationSpec;
 import com.palantir.javapoet.ClassName;
 import com.palantir.javapoet.CodeBlock;
@@ -79,6 +80,27 @@ public class StandardModelGenerator implements ModelGenerator {
 			}
 
 			builder.addField(fieldBuilder.build());
+
+			MethodSpec.Builder getMethodBuilder = MethodSpec.methodBuilder(String.format("%s%s",
+					propertyType.equals(TypeName.BOOLEAN) ? "is" : "get", TextUtil.capitalize(propertyName)));
+
+			getMethodBuilder.addModifiers(Modifier.PUBLIC);
+			getMethodBuilder.returns(propertyType);
+			getMethodBuilder.addStatement("return $L", propertyName);
+
+			builder.addMethod(getMethodBuilder.build());
+			
+			if(!propertyMeta.isFinal()) {
+				
+				MethodSpec.Builder setMethodBuilder = MethodSpec.methodBuilder(String.format("set%s",
+						TextUtil.capitalize(propertyName)));
+
+				setMethodBuilder.addModifiers(Modifier.PUBLIC);
+				setMethodBuilder.addParameter(propertyType, propertyName);
+				setMethodBuilder.addStatement("this.$L = $L", propertyName, propertyName);
+
+				builder.addMethod(setMethodBuilder.build());
+			}
 		}
 
 		generateToCaptionMethod(modelMeta, builder, runtime, log);
