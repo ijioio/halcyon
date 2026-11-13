@@ -2,10 +2,12 @@ package com.ijioio.halcyon.core;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class TypeReference<T> {
@@ -73,7 +75,7 @@ public abstract class TypeReference<T> {
 		this.type = ((ParameterizedType) superType).getActualTypeArguments()[0];
 	}
 
-	protected TypeReference(Type type) {
+	private TypeReference(Type type) {
 		this.type = type;
 	}
 
@@ -126,6 +128,266 @@ public abstract class TypeReference<T> {
 	@Override
 	public String toString() {
 		return "TypeReference [type=" + type + "]";
+	}
+
+	public static final class SimpleParameterizedType implements ParameterizedType {
+
+		public static SimpleParameterizedType of(Class<?> rawType, Type ownerType, Type... arguments) {
+
+			if (rawType == null) {
+				throw new IllegalArgumentException("raw type must not be null");
+			}
+
+			if (arguments == null) {
+				throw new IllegalArgumentException("arguments must not be null");
+			}
+
+			if (Arrays.stream(arguments).anyMatch(item -> item == null)) {
+				throw new IllegalArgumentException("arguments must not contain null values");
+			}
+
+			if (rawType.getTypeParameters().length != arguments.length) {
+				throw new IllegalArgumentException("raw type parameters and arguments must be of the same length");
+			}
+
+			Class<?> declaringClass = rawType.getDeclaringClass();
+
+			if (declaringClass == null || Modifier.isStatic(rawType.getModifiers())) {
+
+				if (ownerType != declaringClass) {
+					throw new IllegalArgumentException("owner type must match the raw type declaring class");
+				}
+
+				if (arguments.length == 0) {
+					throw new IllegalArgumentException("arguments must not be empty");
+				}
+
+			} else if (ownerType instanceof Class<?> ownerClass) {
+
+				if (ownerClass != declaringClass) {
+					throw new IllegalArgumentException("owner type must match the raw type declaring class");
+				}
+
+				if (arguments.length == 0) {
+					throw new IllegalArgumentException("arguments must not be empty");
+				}
+
+			} else if (ownerType instanceof ParameterizedType ownerParameterized) {
+
+				if (ownerParameterized.getRawType() != declaringClass) {
+					throw new IllegalArgumentException("owner type must match the raw type declaring class");
+				}
+
+			} else {
+				throw new IllegalArgumentException("owner type must be a class or a parameterized type");
+			}
+
+			return new SimpleParameterizedType(rawType, ownerType, arguments.clone());
+		}
+
+		private final Class<?> rawType;
+
+		private final Type ownerType;
+
+		private final Type[] arguments;
+
+		private SimpleParameterizedType(Class<?> rawType, Type ownerType, Type[] arguments) {
+
+			this.rawType = rawType;
+			this.ownerType = ownerType;
+			this.arguments = arguments;
+		}
+
+		@Override
+		public Type getRawType() {
+			return rawType;
+		}
+
+		@Override
+		public Type getOwnerType() {
+			return ownerType;
+		}
+
+		@Override
+		public Type[] getActualTypeArguments() {
+			return arguments.clone();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(rawType, ownerType, Arrays.hashCode(arguments));
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+
+			if (this == obj) {
+				return true;
+			}
+
+			if (obj == null) {
+				return false;
+			}
+
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			SimpleParameterizedType other = (SimpleParameterizedType) obj;
+
+			return Objects.equals(rawType, other.rawType) && Objects.equals(ownerType, other.ownerType)
+					&& Arrays.equals(arguments, other.arguments);
+		}
+
+		@Override
+		public String toString() {
+			return "SimpleParameterizedType [rawType=" + rawType + ", ownerType=" + ownerType + ", arguments="
+					+ Arrays.toString(arguments) + "]";
+		}
+	}
+
+	public static final class SimpleGenericArrayType implements GenericArrayType {
+
+		public static SimpleGenericArrayType of(Type type) {
+
+			if (type == null) {
+				throw new IllegalArgumentException("type must not be null");
+			}
+
+			if (!(type instanceof ParameterizedType) && !(type instanceof TypeVariable<?>)
+					&& !(type instanceof GenericArrayType)) {
+				throw new IllegalArgumentException(
+						"type must be a parameterized type, a type variable, or a generic array type");
+			}
+
+			return new SimpleGenericArrayType(type);
+		}
+
+		private final Type type;
+
+		private SimpleGenericArrayType(Type type) {
+			this.type = type;
+		}
+
+		@Override
+		public Type getGenericComponentType() {
+			return type;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(type);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+
+			if (this == obj) {
+				return true;
+			}
+
+			if (obj == null) {
+				return false;
+			}
+
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			SimpleGenericArrayType other = (SimpleGenericArrayType) obj;
+
+			return Objects.equals(type, other.type);
+		}
+
+		@Override
+		public String toString() {
+			return "SimpleGenericArrayType [type=" + type + "]";
+		}
+	}
+
+	public static final class SimpleWildcardType implements WildcardType {
+
+		public static SimpleWildcardType of(Type upperBound, Type lowerBound) {
+
+			if (upperBound != null && lowerBound != null) {
+				throw new IllegalArgumentException("only upper bound or lower bound is allowed");
+			}
+
+			if (upperBound != null) {
+
+				if (upperBound instanceof Class<?> type && type.isPrimitive()) {
+					throw new IllegalArgumentException("upper bound must not be a primitive type");
+				}
+
+				if (upperBound instanceof WildcardType) {
+					throw new IllegalArgumentException("upper bound must not be a wildcard type");
+				}
+			}
+
+			if (lowerBound != null) {
+
+				if (lowerBound instanceof Class<?> type && type.isPrimitive()) {
+					throw new IllegalArgumentException("lower bound must not be a primitive type");
+				}
+
+				if (lowerBound instanceof WildcardType) {
+					throw new IllegalArgumentException("lower bound must not be a wildcard type");
+				}
+			}
+
+			return new SimpleWildcardType(upperBound, lowerBound);
+		}
+
+		private final Type[] upperBounds;
+
+		private final Type[] lowerBounds;
+
+		private SimpleWildcardType(Type upperBound, Type lowerBound) {
+
+			this.upperBounds = upperBound != null ? new Type[] { upperBound } : new Type[] { Object.class };
+			this.lowerBounds = lowerBound != null ? new Type[] { lowerBound } : new Type[0];
+		}
+
+		@Override
+		public Type[] getUpperBounds() {
+			return upperBounds.clone();
+		}
+
+		@Override
+		public Type[] getLowerBounds() {
+			return lowerBounds.clone();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(Arrays.hashCode(upperBounds), Arrays.hashCode(lowerBounds));
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+
+			if (this == obj) {
+				return true;
+			}
+
+			if (obj == null) {
+				return false;
+			}
+
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			SimpleWildcardType other = (SimpleWildcardType) obj;
+
+			return Arrays.equals(upperBounds, other.upperBounds) && Arrays.equals(lowerBounds, other.lowerBounds);
+		}
+
+		@Override
+		public String toString() {
+			return "SimpleWildcardType [upperBounds=" + Arrays.toString(upperBounds) + ", lowerBounds="
+					+ Arrays.toString(lowerBounds) + "]";
+		}
 	}
 
 	private static final class SimpleTypeReference<T> extends TypeReference<T> {
