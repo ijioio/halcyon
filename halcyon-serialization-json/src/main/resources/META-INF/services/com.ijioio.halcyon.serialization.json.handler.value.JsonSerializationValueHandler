@@ -1,0 +1,12 @@
+com.ijioio.halcyon.serialization.json.handler.value.JsonBooleanSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonCharacterSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonByteSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonShortSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonIntegerSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonLongSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonStringSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonUuidSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonClassSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonCollectionSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonMapSerializationValueHandler
+com.ijioio.halcyon.serialization.json.handler.value.JsonModelSerializationValueHandler
