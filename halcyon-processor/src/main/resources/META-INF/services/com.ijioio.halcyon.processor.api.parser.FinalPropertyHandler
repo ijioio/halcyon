@@ -1,0 +1,3 @@
+com.ijioio.halcyon.processor.parser.finals.property.handler.ListFinalPropertyHandler
+com.ijioio.halcyon.processor.parser.finals.property.handler.SetFinalPropertyHandler
+com.ijioio.halcyon.processor.parser.finals.property.handler.MapFinalPropertyHandler
