@@ -1,6 +1,6 @@
 package com.ijioio.halcyon.core.query;
 
-public final class Row2<T1, T2> implements Row, Expression<Record2<T1, T2>> {
+public final class Row2<T1, T2> implements Row, Composite<Record2<T1, T2>> {
 
 	public static <T1, T2> Row2<T1, T2> of(Expression<T1> expression1, Expression<T2> expression2) {
 
@@ -36,5 +36,9 @@ public final class Row2<T1, T2> implements Row, Expression<Record2<T1, T2>> {
 
 	public Expression<T2> getExpression2() {
 		return expression2;
+	}
+
+	public Condition eq(T1 value1, T2 value2) {
+		return eq(Rows.of(value1, value2));
 	}
 }

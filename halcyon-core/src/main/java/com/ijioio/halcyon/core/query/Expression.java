@@ -1,14 +1,14 @@
 package com.ijioio.halcyon.core.query;
 
-import com.ijioio.halcyon.core.query.Condition.SimpleCondition;
+import java.util.List;
+
+import com.ijioio.halcyon.core.TypeReference;
 
 public interface Expression<V> {
 
-	public default Condition eq(V value) {
-		return SimpleCondition.of(this, Operation.EQ, Value.of(value));
-	}
+	public int getDegree();
 
-	public default Condition eq(Expression<V> other) {
-		return SimpleCondition.of(this, Operation.EQ, other);
+	public default List<TypeReference<?>> getTypes() {
+		return List.of();
 	}
 }

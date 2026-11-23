@@ -1,6 +1,6 @@
 package com.ijioio.halcyon.core.query;
 
-public final class Subquery<R extends Record> implements Expression<R> {
+public final class Subquery<R extends Record> implements Composite<R> {
 
 	public static <R extends Record> Subquery<R> of(SelectQuery<R> query) {
 
@@ -15,6 +15,11 @@ public final class Subquery<R extends Record> implements Expression<R> {
 
 	private Subquery(SelectQuery<R> query) {
 		this.query = query;
+	}
+
+	@Override
+	public int getDegree() {
+		return query.getSelect().getRecord().getDegree();
 	}
 
 	public SelectQuery<R> getQuery() {

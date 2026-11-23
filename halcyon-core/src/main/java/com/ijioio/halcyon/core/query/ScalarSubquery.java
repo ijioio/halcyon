@@ -1,6 +1,6 @@
 package com.ijioio.halcyon.core.query;
 
-public final class ScalarSubquery<V> implements Expression<V> {
+public final class ScalarSubquery<V> implements Scalar<V> {
 
 	public static <V> ScalarSubquery<V> of(SelectQuery<Record1<V>> query) {
 
@@ -15,6 +15,11 @@ public final class ScalarSubquery<V> implements Expression<V> {
 
 	private ScalarSubquery(SelectQuery<Record1<V>> query) {
 		this.query = query;
+	}
+
+	@Override
+	public int getDegree() {
+		return 1;
 	}
 
 	public SelectQuery<Record1<V>> getQuery() {

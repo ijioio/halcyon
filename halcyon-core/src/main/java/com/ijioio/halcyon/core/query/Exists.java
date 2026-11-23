@@ -1,6 +1,6 @@
 package com.ijioio.halcyon.core.query;
 
-public final class Exists implements Expression<Boolean> {
+public final class Exists implements Scalar<Boolean> {
 
 	public static Exists of(ExistsQuery query) {
 
@@ -15,6 +15,11 @@ public final class Exists implements Expression<Boolean> {
 
 	private Exists(ExistsQuery query) {
 		this.query = query;
+	}
+
+	@Override
+	public int getDegree() {
+		return 1;
 	}
 
 	public ExistsQuery getQuery() {

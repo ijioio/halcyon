@@ -2,7 +2,7 @@ package com.ijioio.halcyon.core.query;
 
 import com.ijioio.halcyon.core.property.Property;
 
-public final class Field<T extends Table<?>, V> implements Expression<V> {
+public final class Field<T extends Table<?>, V> implements Scalar<V> {
 
 	public static <T extends Table<?>, V> Field<T, V> of(T table, Property<V> property) {
 		return new Field<>(table, property);
@@ -16,6 +16,11 @@ public final class Field<T extends Table<?>, V> implements Expression<V> {
 
 		this.table = table;
 		this.property = property;
+	}
+
+	@Override
+	public int getDegree() {
+		return 1;
 	}
 
 	public T getTable() {

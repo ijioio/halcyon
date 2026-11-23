@@ -2,7 +2,7 @@ package com.ijioio.halcyon.core.query;
 
 import java.util.List;
 
-public final class Count extends AbstractFunction<Long> {
+public final class Count extends AbstractFunction<Long> implements Scalar<Long> {
 
 	public static Count of() {
 		return new Count(List.of());
@@ -17,7 +17,12 @@ public final class Count extends AbstractFunction<Long> {
 		return new Count(List.of(argument));
 	}
 
-	private Count(List<? extends Expression<?>> arguments) {
+	private Count(List<Expression<?>> arguments) {
 		super(arguments);
+	}
+
+	@Override
+	public int getDegree() {
+		return 1;
 	}
 }

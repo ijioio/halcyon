@@ -25,7 +25,7 @@ public interface Condition {
 			conditions.add(other);
 		}
 
-		return AndCondition.of(conditions);
+		return Conditions.and(conditions);
 	}
 
 	public default Condition or(Condition other) {
@@ -48,7 +48,7 @@ public interface Condition {
 			conditions.add(other);
 		}
 
-		return OrCondition.of(conditions);
+		return Conditions.or(conditions);
 	}
 
 	public static final class SimpleCondition implements Condition {
@@ -67,8 +67,7 @@ public interface Condition {
 				throw new IllegalArgumentException("right must not be null");
 			}
 
-			if (left instanceof Row leftRow && right instanceof Row rightRow
-					&& leftRow.getDegree() != rightRow.getDegree()) {
+			if (left.getDegree() != right.getDegree()) {
 				throw new IllegalArgumentException("left and right must be of the same degree");
 			}
 

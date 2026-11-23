@@ -3,7 +3,7 @@ package com.ijioio.halcyon.core.query;
 import java.util.Arrays;
 import java.util.List;
 
-public final class RowN implements Row, Expression<RecordN> {
+public final class RowN implements Row, Composite<RecordN> {
 
 	public static RowN of(Expression<?>... expressions) {
 
@@ -35,5 +35,9 @@ public final class RowN implements Row, Expression<RecordN> {
 
 	public List<Expression<?>> getExpressions() {
 		return expressions;
+	}
+
+	public Condition eq(Object... values) {
+		return eq(Rows.of(values));
 	}
 }

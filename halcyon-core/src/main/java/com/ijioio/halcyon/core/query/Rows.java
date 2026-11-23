@@ -8,7 +8,7 @@ public final class Rows {
 	}
 
 	public static <T1> Row1<T1> of(T1 value1) {
-		return Row1.of(Value.of(value1));
+		return Row1.of(Values.of(value1));
 	}
 
 	public static <T1> Row1<T1> of(Expression<T1> expression1) {
@@ -16,7 +16,7 @@ public final class Rows {
 	}
 
 	public static <T1, T2> Row2<T1, T2> of(T1 value1, T2 value2) {
-		return Row2.of(Value.of(value1), Value.of(value2));
+		return Row2.of(Values.of(value1), Values.of(value2));
 	}
 
 	public static <T1, T2> Row2<T1, T2> of(Expression<T1> expression1, Expression<T2> expression2) {
@@ -24,7 +24,16 @@ public final class Rows {
 	}
 
 	public static RowN of(Object... values) {
-		return RowN.of(Arrays.stream(values).map(item -> Value.of(item)).toArray(size -> new Expression<?>[size]));
+
+		if (values == null) {
+			throw new IllegalArgumentException("values must not be null");
+		}
+
+		if (values.length == 0) {
+			throw new IllegalArgumentException("values must not be empty");
+		}
+
+		return RowN.of(Arrays.stream(values).map(item -> Values.of(item)).toArray(size -> new Expression<?>[size]));
 	}
 
 	public static RowN of(Expression<?>... expressions) {
