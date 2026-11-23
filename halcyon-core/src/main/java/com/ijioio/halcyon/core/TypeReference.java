@@ -58,6 +58,10 @@ public abstract class TypeReference<T> {
 		}
 	};
 
+	public static <T> TypeReference<T> of(Class<T> type) {
+		return of(type);
+	}
+
 	public static <T> TypeReference<T> of(Type type) {
 		return new SimpleTypeReference<>(type);
 	}
@@ -88,8 +92,7 @@ public abstract class TypeReference<T> {
 		return (Class<T>) rawTypeVisitor.visit(type);
 	}
 
-	@SuppressWarnings({ "unchecked", "hiding" })
-	public <T> TypeReference<T> getArgumentType(int index) {
+	public <A> TypeReference<A> getArgumentType(int index) {
 
 		Type[] arguments = argumentTypeVisitor.visit(type);
 
@@ -97,7 +100,7 @@ public abstract class TypeReference<T> {
 			throw new IllegalArgumentException(String.format("argument index %s is out of bounds for %s", index, type));
 		}
 
-		return (TypeReference<T>) of(arguments[index]);
+		return new SimpleTypeReference<A>(arguments[index]);
 	}
 
 	@Override
